@@ -75,6 +75,8 @@ void testIocInitOk(void)
 
 void testIocShutdownOk(void)
 {
+    if(!testEvtLock)
+        cantProceed("Test missing call to testdbPrepare()\n");
     epicsMutexMustLock(testEvtLock);
     if(ellCount(&testEvtList))
         testDiag("Warning, testing monitors still active at testIocShutdownOk()");
@@ -267,6 +269,8 @@ testMonitor* testMonitorCreate(const char* pvname, unsigned mask, unsigned opt)
 
     db_event_enable(mon->sub);
 
+    if(!testEvtLock)
+        cantProceed("Test missing call to testdbPrepare()\n");
     epicsMutexMustLock(testEvtLock);
     ellAdd(&testEvtList, &mon->node);
     epicsMutexUnlock(testEvtLock);
