@@ -27,6 +27,7 @@
 #include <limits.h>
 #include <float.h>
 #include <string> // vxWorks 6.0 requires this include
+#include <memory> // for std::auto_ptr
 
 #define epicsExportSharedSymbols
 #include "locationException.h"
@@ -35,6 +36,7 @@
 #include "envDefs.h"
 #include "epicsTime.h"
 #include "osiSock.h" /* pull in struct timeval */
+#include "epicsAtomic.h"
 #include "epicsStdio.h"
 
 static const char pEpicsTimeVersion[] =
@@ -144,22 +146,34 @@ void epicsTime :: addNanoSec ( long nSecAdj )
 epicsTime::epicsTime ( const time_t_wrapper & ansiTimeTicks )
 {
     // avoid c++ static initialization order issues
-    static epicsTimeLoadTimeInit & lti = * new epicsTimeLoadTimeInit ();
+#if __cplusplus >= 201103l
+    // c++11 makes static construction easier
+    static epicsTimeLoadTimeInit * lti = new epicsTimeLoadTimeInit ();
+#else
+    // Use atomic pointer ops to handle race
+    static epicsTimeLoadTimeInit * lti;
+    if ( !epics::atomic::get(lti) ) {
+        std::auto_ptr<epicsTimeLoadTimeInit> lti_n(new epicsTimeLoadTimeInit ());
+        if ( epics::atomic::compareAndSwap((EpicsAtomicPtrT&)lti, NULL, (EpicsAtomicPtrT)lti_n.get())==NULL ) {
+            lti_n.release(); // we win.  lti==lti_n.get()
+        } // else {} // someone else won, ltr!=NULL  free our copy
+    }
+#endif
 
     //
     // try to directly map time_t into an unsigned long integer because this is
     // faster on systems w/o hardware floating point and a simple integer type time_t.
     //
-    if ( lti.useDiffTimeOptimization ) {
+    if ( lti->useDiffTimeOptimization ) {
         // LONG_MAX is used here and not ULONG_MAX because some systems (linux)
         // still store time_t as a long.
         if ( ansiTimeTicks.ts > 0 && ansiTimeTicks.ts <= LONG_MAX ) {
             unsigned long ticks = static_cast < unsigned long > ( ansiTimeTicks.ts );
-            if ( ticks >= lti.epicsEpochOffsetAsAnUnsignedLong ) {
-                this->secPastEpoch = ticks - lti.epicsEpochOffsetAsAnUnsignedLong;
+            if ( ticks >= lti->epicsEpochOffsetAsAnUnsignedLong ) {
+                this->secPastEpoch = ticks - lti->epicsEpochOffsetAsAnUnsignedLong;
             }
             else {
-                this->secPastEpoch = ( ULONG_MAX - lti.epicsEpochOffsetAsAnUnsignedLong ) + ticks;
+                this->secPastEpoch = ( ULONG_MAX - lti->epicsEpochOffsetAsAnUnsignedLong ) + ticks;
             }
             this->nSec = 0;
             return;
@@ -170,7 +184,7 @@ epicsTime::epicsTime ( const time_t_wrapper & ansiTimeTicks )
     // otherwise map time_t, which ANSI C and POSIX define as any arithmetic type,
     // into type double
     //
-    double sec = ansiTimeTicks.ts * lti.time_tSecPerTick - lti.epicsEpochOffset;
+    double sec = ansiTimeTicks.ts * lti->time_tSecPerTick - lti->epicsEpochOffset;
 
     //
     // map into the the EPICS time stamp range (which allows rollover)
