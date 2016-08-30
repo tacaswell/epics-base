@@ -202,26 +202,6 @@ udpiiu::udpiiu (
             sockErrBuf );
     }
 
-#if 0
-    {
-        /*
-         * some concern that vxWorks will run out of mBuf's
-         * if this change is made joh 11-10-98
-         *
-         * bump up the UDP recv buffer
-         */
-        int size = 1u<<15u;
-        status = setsockopt ( this->sock, SOL_SOCKET, SO_RCVBUF,
-                (char *)&size, sizeof (size) );
-        if (status<0) {
-            char sockErrBuf[64];
-            epicsSocketConvertErrnoToString ( sockErrBuf, sizeof ( sockErrBuf ) );
-            errlogPrintf ( "CAC: unable to set socket option SO_RCVBUF because \"%s\"\n",
-                sockErrBuf );
-        }
-    }
-#endif
-
     // force a bind to an unconstrained address so we can obtain
     // the local port number below
     static const unsigned short PORT_ANY = 0u;

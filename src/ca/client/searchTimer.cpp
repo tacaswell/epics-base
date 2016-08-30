@@ -147,57 +147,6 @@ epicsTimerNotify::expireStatus searchTimer::expire (
     }
 
     if ( this->searchAttempts ) {
-#if 0
-        //
-        // dynamically adjust the number of UDP frames per 
-        // try depending how many search requests are not 
-        // replied to
-        //
-        // The variable this->framesPerTry
-        // determines the number of UDP frames to be sent
-        // each time that expire() is called.
-        // If this value is too high we will waste some
-        // network bandwidth. If it is too low we will
-        // use very little of the incoming UDP message
-        // buffer associated with the server's port and
-        // will therefore take longer to connect. We 
-        // initialize this->framesPerTry to a prime number 
-        // so that it is less likely that the
-        // same channel is in the last UDP frame
-        // sent every time that this is called (and
-        // potentially discarded by a CA server with
-        // a small UDP input queue). 
-        //
-        // increase frames per try only if we see better than
-        // a 93.75% success rate for one pass through the list
-        //
-        if ( this->searchResponses >
-            ( this->searchAttempts - (this->searchAttempts/16u) ) ) {
-            // increase UDP frames per try if we have a good score
-            if ( this->framesPerTry < maxTriesPerFrame ) {
-                // a congestion avoidance threshold similar to TCP is now used
-                if ( this->framesPerTry < this->framesPerTryCongestThresh ) {
-                    this->framesPerTry += this->framesPerTry;
-                }
-                else {
-                    this->framesPerTry += (this->framesPerTry/8) + 1;
-                }
-                debugPrintf ( ("Increasing frame count to %u t=%u r=%u\n", 
-                    this->framesPerTry, this->searchAttempts, this->searchResponses) );
-            }
-        }
-        // if we detect congestion because we have less than a 87.5% success 
-        // rate then gradually reduce the frames per try
-        else if ( this->searchResponses < 
-            ( this->searchAttempts - (this->searchAttempts/8u) ) ) {
-            if ( this->framesPerTry > 1 ) {
-                this->framesPerTry--;
-            }
-            this->framesPerTryCongestThresh = this->framesPerTry/2 + 1;
-            debugPrintf ( ("Congestion detected - set frames per try to %f t=%u r=%u\n", 
-                this->framesPerTry, this->searchAttempts, this->searchResponses) );
-        }
-#else
         if ( this->searchResponses == this->searchAttempts ) {
             // increase UDP frames per try if we have a good score
             if ( this->framesPerTry < maxTriesPerFrame ) {
@@ -224,7 +173,6 @@ epicsTimerNotify::expireStatus searchTimer::expire (
             debugPrintf ( ("Congestion detected - set frames per try to %g t=%u r=%u\n", 
                 this->framesPerTry, this->searchAttempts, this->searchResponses) );
         }
-#endif
     }
 
     this->dgSeqNoAtTimerExpireBegin = 

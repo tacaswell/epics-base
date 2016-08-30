@@ -2234,61 +2234,6 @@ caStatus casStrmClient::eventCancelAction (
     return S_cas_success;
 }
 
-#if 0
-/*
- * casStrmClient::noReadAccessEvent()
- *
- * substantial complication introduced here by the need for backwards
- * compatibility
- */
-caStatus casStrmClient::noReadAccessEvent ( 
-    epicsGuard < casClientMutex > & guard, casClientMon * pMon )
-{
-    caHdr falseReply;
-    unsigned size;
-    caHdr * reply;
-    int status;
-
-    size = dbr_size_n ( pMon->getType(), pMon->getCount() );
-
-    falseReply.m_cmmd = CA_PROTO_EVENT_ADD;
-    falseReply.m_postsize = size;
-    falseReply.m_dataType = pMon->getType();
-    falseReply.m_count = pMon->getCount();
-    falseReply.m_cid = pMon->getChannel().getCID();
-    falseReply.m_available = pMon->getClientId();
-
-    status = this->allocMsg ( size, &reply );
-    if ( status ) {
-        if( status == S_cas_hugeRequest ) {
-            return this->sendErr ( &falseReply, ECA_TOLARGE, NULL );
-        }
-        return status;
-    }
-    else{
-        /*
-         * New clients recv the status of the
-         * operation directly to the
-         * event/put/get callback.
-         *
-         * Fetched value is zerod in case they
-         * use it even when the status indicates 
-         * failure.
-         *
-         * The m_cid field in the protocol
-         * header is abused to carry the status
-         */
-        *reply = falseReply;
-        reply->m_postsize = size;
-        reply->m_cid = ECA_NORDACCESS;
-        memset((char *)(reply+1), 0, size);
-        this->commitMsg ();
-    }
-    
-    return S_cas_success;
-}
-#endif
-
 //
 // casStrmClient::readSyncAction()
 //

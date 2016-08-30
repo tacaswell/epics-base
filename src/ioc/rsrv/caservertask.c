@@ -1381,33 +1381,6 @@ struct client *create_tcp_client ( SOCKET sock )
         return NULL;
     }
 
-    /*
-     * some concern that vxWorks will run out of mBuf's
-     * if this change is made
-     *
-     * joh 11-10-98
-     */
-#if 0
-    /*
-     * set TCP buffer sizes to be synergistic
-     * with CA internal buffering
-     */
-    i = MAX_MSG_SIZE;
-    status = setsockopt ( sock, SOL_SOCKET, SO_SNDBUF, (char *) &i, sizeof (i) );
-    if (status < 0) {
-        errlogPrintf ( "CAS: SO_SNDBUF set failed\n" );
-        destroy_client ( client );
-        return NULL;
-    }
-    i = MAX_MSG_SIZE;
-    status = setsockopt ( sock, SOL_SOCKET, SO_RCVBUF, (char *) &i, sizeof (i) );
-    if (status < 0) {
-        errlogPrintf ( "CAS: SO_RCVBUF set failed\n" );
-        destroy_client ( client );
-        return NULL;
-    }
-#endif
-
     addrSize = sizeof ( client->addr );
     status = getpeername ( sock, (struct sockaddr *)&client->addr,
                     &addrSize );

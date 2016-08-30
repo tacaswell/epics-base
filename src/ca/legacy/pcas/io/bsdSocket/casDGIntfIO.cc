@@ -501,39 +501,7 @@ SOCKET casDGIntfIO::makeSockDG ()
             "CAS: unable to set up cast socket\n");
         return INVALID_SOCKET;
     }
-    
-    //
-    // some concern that vxWorks will run out of mBuf's
-    // if this change is made
-    //
-    // joh 11-10-98
-    //
-#if 0
-    {
-        //
-        //
-        // this allows for faster connects by queuing
-        // additional incoming UDP search frames
-        //
-        // this allocates a 32k buffer
-        // (uses a power of two)
-        //
-        int size = 1u<<15u;
-        status = setsockopt(
-            newSock,
-            SOL_SOCKET,
-            SO_RCVBUF,
-            (char *)&size,
-            sizeof(size));
-        if (status<0) {
-            epicsSocketDestroy (newSock);
-            errMessage(S_cas_internal,
-                "CAS: unable to set cast socket size\n");
-            return INVALID_SOCKET;
-        }
-    }
-#endif
-    
+
     //
     // release the port in case we exit early. Also if
     // on a kernel with MULTICAST mods then we can have

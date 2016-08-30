@@ -1710,12 +1710,6 @@ unsigned tcpiiu::requestMessageBytesPending (
         epicsGuard < epicsMutex > & guard )
 {
     guard.assertIdenticalMutex ( this->mutex );
-#if 0
-    if ( ! this->earlyFlush && this->sendQue.flushEarlyThreshold(0u) ) {
-        this->earlyFlush = true;
-        this->sendThreadFlushEvent.signal ();
-    }
-#endif
     return sendQue.occupiedBytes ();
 }
 
@@ -2008,21 +2002,6 @@ void tcpiiu::flushRequest ( epicsGuard < epicsMutex > & )
 
 bool tcpiiu::bytesArePendingInOS () const
 {
-#if 0
-    FD_SET readBits;
-    FD_ZERO ( & readBits );
-    FD_SET ( this->sock, & readBits );
-    struct timeval tmo;
-    tmo.tv_sec = 0;
-    tmo.tv_usec = 0;
-    int status = select ( this->sock + 1, & readBits, NULL, NULL, & tmo );
-    if ( status > 0 ) {
-        if ( FD_ISSET ( this->sock, & readBits ) ) {	
-            return true;
-        }
-    }
-    return false;
-#else
     osiSockIoctl_t bytesPending = 0; /* shut up purifys yapping */
     int status = socket_ioctl ( this->sock,
                             FIONREAD, & bytesPending );
@@ -2032,7 +2011,6 @@ bool tcpiiu::bytesArePendingInOS () const
         }
     }
     return false;
-#endif
 }
 
 double tcpiiu::receiveWatchdogDelay (

@@ -58,43 +58,6 @@ casStreamIO::casStreamIO ( caServerI & cas, clientBufMemoryManager & bufMgr,
 			__FILE__, sockErrBuf );
 		throw S_cas_internal;
 	}
-
-	/*
-	 * some concern that vxWorks will run out of mBuf's
-	 * if this change is made
-	 *
-	 * joh 11-10-98
-	 */
-#if 0
-	int i;
-
-	/*
-	 * set TCP buffer sizes to be synergistic
-	 * with CA internal buffering
-	 */
-	i = MAX_MSG_SIZE;
-	status = setsockopt(
-					sock,
-					SOL_SOCKET,
-					SO_SNDBUF,
-					(char *)&i,
-					sizeof(i));
-	if(status < 0){
-			errlogPrintf("CAS: SO_SNDBUF set failed\n");
-	    throw S_cas_internal;
-	}
-	i = MAX_MSG_SIZE;
-	status = setsockopt(
-					sock,
-					SOL_SOCKET,
-					SO_RCVBUF,
-					(char *)&i,
-					sizeof(i));
-	if(status < 0){
-		errlogPrintf("CAS: SO_RCVBUF set failed\n");
-	    throw S_cas_internal;
-	}
-#endif
     
 	/* cache the TCP send buffer size */
 	unsigned int size = MAX_TCP;
