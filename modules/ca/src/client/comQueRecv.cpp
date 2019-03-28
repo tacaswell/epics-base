@@ -101,16 +101,9 @@ void comQueRecv::popString ( epicsOldString *pStr )
 }
 
 void comQueRecv::pushLastComBufReceived ( comBuf & bufIn )
-   
+
 {
     bufIn.commitIncomming ();
-    comBuf * pComBuf = this->bufs.last ();
-    if ( pComBuf ) {
-        if ( pComBuf->unoccupiedBytes() ) {
-            this->nBytesPending += pComBuf->push ( bufIn );
-            pComBuf->commitIncomming ();
-        }
-    }
     unsigned bufBytes = bufIn.occupiedBytes();
     if ( bufBytes ) {
         this->nBytesPending += bufBytes;
